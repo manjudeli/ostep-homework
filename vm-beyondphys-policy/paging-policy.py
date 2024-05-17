@@ -135,6 +135,12 @@ else:
     # track reference bits for clock
     ref   = {}
 
+    # 초기 설정
+    count = 0
+    memory = []
+    hits = 0
+    miss = 0
+
     cdebug = False
 
     # need to generate addresses
@@ -153,12 +159,23 @@ else:
             miss = miss + 1
 
         victim = -1        
-        if idx == -1:
+        if idx == -1: # 미스발생
             # miss, replace?
             # print('BUG count, cachesize:', count, cachesize)
-            if count == cachesize:
+            if count == cachesize:  # 캐시가 꽉 찼으면 교체 필요
                 # must replace
-                if policy == 'FIFO' or policy == 'LRU':
+                if policy == 'FIFO':  # FIFO 세컨드 찬스 적용
+                    found = False
+                    while not found :
+                        candidate = memory[0]
+                        if ref.get(candidate, 0) == 1:
+                            ref[candidate] =0
+                            memory.append(memory.pop(0))  # 큐의 끝으로 이동
+                        else:
+                            victim = memory.pop(0)
+                            ref.pop(victim, None)  # 참조 비트 선택
+                            found = True
+                elif policy == 'LRU':
                     victim = memory.pop(0)
                 elif policy == 'MRU':
                     victim = memory.pop(count-1)
